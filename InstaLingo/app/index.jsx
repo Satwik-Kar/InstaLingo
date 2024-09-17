@@ -2,23 +2,20 @@ import {ActivityIndicator, FlatList, Pressable, SafeAreaView, StyleSheet, Text, 
 import {useEffect, useState} from "react";
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Modal from 'react-native-modal'; // Import Modal from react-native-modal
+import Modal from 'react-native-modal';
+import {languagesCodes} from "./languages"; // Import Modal from react-native-modal
 
+const languages = languagesCodes
 
 export default function Index() {
     const [title, setTitle] = useState("नमस्ते");
-    const [detectedLanguage, setDetectedLanguage] = useState('en');
+    const [strangerLanguageName, setStrangerLanguageName] = useState();
+    const [strangerLanguageId, setStrangerLanguageId] = useState('en-US');
     const [languageId, setLanguageId] = useState('en');
     const [languageName, setLanguageName] = useState('english');
     const [isLoading, setIsLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const languages = [
-        {id: 'en', name: 'English'},
-        {id: 'sp', name: 'Spanish'},
-        {id: 'fr', name: 'French'},
-        {id: 'ge', name: 'German'},
-        {id: 'ch', name: 'Chinese'},
-    ];
+    const [isStrangerLanguageSelected, setIsStrangerLanguageSelected] = useState(false);
     const toggleModal = () => {
         setIsModalVisible(!isModalVisible);
     };
@@ -71,17 +68,71 @@ export default function Index() {
     // }, []);
 
     async function handleSelectLanguage(languageId, languageName) {
-        setLanguageId(languageId);
-        setLanguageName(languageName);
-        await AsyncStorage.setItem('languageId', languageId);
-        await AsyncStorage.setItem('languageName', languageName);
+        if (isStrangerLanguageSelected) {
+
+            setStrangerLanguageId(languageId)
+            setStrangerLanguageName(languageName)
+
+        } else {
+            setLanguageId(languageId);
+            setLanguageName(languageName);
+            await AsyncStorage.setItem('languageId', languageId);
+            await AsyncStorage.setItem('languageName', languageName);
+        }
+
 
         setIsModalVisible(false)
+    }
+
+    function selectLanguageForStranger() {
+        setIsStrangerLanguageSelected(true);
+        toggleModal()
+
+    }
+
+    function pressInPersonal() {
+        if (!isStrangerLanguageSelected) {
+            alert("Select a language for stranger first!!")
+            return
+
+        }
+
+
+    }
+
+    function pressOutPersonal() {
+        if (!isStrangerLanguageSelected) {
+            alert("Select a language for stranger first!!")
+            return
+
+        }
+    }
+
+    function pressInStranger() {
+        if (!isStrangerLanguageSelected) {
+            alert("Select a language for stranger first!!")
+            return
+
+        }
+    }
+
+    function pressOutStranger() {
+        if (!isStrangerLanguageSelected) {
+            alert("Select a language for stranger first!!")
+            return
+
+        }
     }
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.smallContainer}>
+                <Text style={styles.title}>{strangerLanguageName}</Text>
+                <Pressable style={styles.pressableSelectLanguage} onPress={selectLanguageForStranger}>
+
+                    <Text>Select language for stranger</Text>
+
+                </Pressable>
 
                 <Pressable style={styles.pressable} onPressIn={() => setTitle("Pressed in")}
                            onPressOut={() => setTitle("Pressed out")}>
@@ -103,7 +154,7 @@ export default function Index() {
                 <Pressable style={styles.pressable} onPressIn={() => setTitle("Pressed in")}
                            onPressOut={() => setTitle("Pressed out")}>
 
-                    <Text>Hold to speak</Text>
+                    <Text>Hold to speak (PERSONAL)</Text>
 
                 </Pressable>
                 <Text style={styles.title}>{languageName}</Text>
@@ -121,7 +172,7 @@ export default function Index() {
                         keyExtractor={(item) => item.id}
                         renderItem={({item}) => (
                             <Pressable
-                                onPress={() => handleSelectLanguage(item.id,item.name)}
+                                onPress={() => handleSelectLanguage(item.id, item.name)}
                                 style={styles.modalItem}
                             >
                                 <Text style={styles.modalItemText}>{item.name}</Text>
@@ -160,6 +211,16 @@ const styles = StyleSheet.create({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+    }, pressableSelectLanguage: {
+        height: 50, marginBottom: 30,
+        width: 150,
+        backgroundColor: 'rgba(65,141,255,0.52)',
+        borderRadius: 50,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+
+
     }, modal: {
         justifyContent: 'flex-end',
         margin: 0,
