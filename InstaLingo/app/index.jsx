@@ -101,11 +101,7 @@ export default function Index() {
     }
 
     function pressOutPersonal() {
-        if (!isStrangerLanguageSelected) {
-            alert("Select a language for stranger first!!")
-            return
 
-        }
     }
 
     function pressInStranger() {
@@ -117,11 +113,7 @@ export default function Index() {
     }
 
     function pressOutStranger() {
-        if (!isStrangerLanguageSelected) {
-            alert("Select a language for stranger first!!")
-            return
 
-        }
     }
 
     return (
@@ -134,8 +126,8 @@ export default function Index() {
 
                 </Pressable>
 
-                <Pressable style={styles.pressable} onPressIn={() => setTitle("Pressed in")}
-                           onPressOut={() => setTitle("Pressed out")}>
+                <Pressable style={styles.pressable} onPressIn={pressInStranger}
+                           onPressOut={pressOutStranger}>
 
                     <Text>Hold to speak (STRANGER)</Text>
 
@@ -151,8 +143,8 @@ export default function Index() {
 
             </View>
             <View style={styles.smallContainer}>
-                <Pressable style={styles.pressable} onPressIn={() => setTitle("Pressed in")}
-                           onPressOut={() => setTitle("Pressed out")}>
+                <Pressable style={styles.pressable} onPressIn={pressInPersonal}
+                           onPressOut={pressOutPersonal}>
 
                     <Text>Hold to speak (PERSONAL)</Text>
 
