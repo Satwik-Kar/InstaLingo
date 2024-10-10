@@ -88,7 +88,7 @@ export default function Index() {
 
     const handlePressStranger = useCallback(() => {
         if (!isStrangerLanguageSelected) {
-            Alert.alert("Select Language", "Select a language for the stranger first!");
+            Alert.alert("Information", "Select a language for the stranger first!");
             return;
         }
     }, [isStrangerLanguageSelected]);
@@ -106,9 +106,9 @@ export default function Index() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.smallContainer}>
-                <Text style={styles.title}>{strangerLanguageName || "Stranger Language"}</Text>
+
                 <Pressable style={styles.pressableSelectLanguage} onPress={selectLanguageForStranger}>
-                    <Text>Select language for stranger</Text>
+                    <Text>{strangerLanguageName || "Select Stranger Language"}</Text>
                 </Pressable>
                 <Pressable style={styles.pressable} onPressIn={handlePressStranger}>
                     <Text>Hold to speak (STRANGER)</Text>
