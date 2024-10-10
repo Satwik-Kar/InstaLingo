@@ -89,7 +89,6 @@ export const languagesCodes = [
     {id: 'mn-MN', name: 'Mongolian (Mongolia)'},
     {id: 'ne-NP', name: 'Nepali (Nepal)'},
     {id: 'no-NO', name: 'Norwegian (Norway)'},
-    {id: 'ny-MW', name: 'Chichewa (Malawi)'},
     {id: 'or-IN', name: 'Odia (India)'},
     {id: 'om-ET', name: 'Oromo (Ethiopia)'},
     {id: 'ps-AF', name: 'Pashto (Afghanistan)'},
