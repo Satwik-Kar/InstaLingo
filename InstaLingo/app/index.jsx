@@ -16,9 +16,9 @@ export default function Index() {
     const [isPersonalListening, setIsPersonalListening] = useState(false);
 
     const [strangerLanguageName, setStrangerLanguageName] = useState();
-    const [strangerLanguageId, setStrangerLanguageId] = useState("en-US");
-    const [languageId, setLanguageId] = useState("en-US");
-    const [languageName, setLanguageName] = useState("english");
+    const [strangerLanguageId, setStrangerLanguageId] = useState();
+    const [languageId, setLanguageId] = useState();
+    const [languageName, setLanguageName] = useState();
     const [isLoading, setIsLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isStrangerLanguageSelected, setIsStrangerLanguageSelected] = useState(false);
@@ -32,10 +32,25 @@ export default function Index() {
     }, []);
     const onSpeechResults = (event) => {
         const speech = event.value ? event.value[0] : '';
+        setRecognizedPersonal(null) && setRecognizedStranger(null);
         isPersonalListening ? setRecognizedPersonal(speech) : setRecognizedStranger(speech);
+        throttledTranslateLanguage("or","en")
+
 
     };
+    useEffect(() => {
+        // Function to get the speech recognition services available on the device
+        const fetchSpeechRecognitionServices = async () => {
+            try {
+                const availableServices = await Voice.getSpeechRecognitionServices();
+                console.log('Available Speech Recognition Services: ', availableServices);
+            } catch (error) {
+                console.error('Error fetching speech recognition services: ', error);
+            }
+        };
 
+        fetchSpeechRecognitionServices();
+    }, []);
     const onSpeechError = (event) => {
         console.error('Speech recognition error: ', event.error);
         setIsLoading(false);
@@ -45,22 +60,27 @@ export default function Index() {
         setIsModalVisible(prevState => !prevState);
     }, []);
 
-    const throttledDetectLanguage = useCallback(throttle(async () => {
+    const throttledTranslateLanguage = useCallback(throttle(async (from,to) => {
         try {
             setIsLoading(true);
+
             const options = {
-                method: "POST",
-                url: "https://microsoft-translator-text.p.rapidapi.com/Detect",
-                params: {"api-version": "3.0"},
+                method: 'POST',
+                url: 'https://deep-translate1.p.rapidapi.com/language/translate/v2',
                 headers: {
-                    "x-rapidapi-key": "your-api-key",
-                    "x-rapidapi-host": "microsoft-translator-text.p.rapidapi.com",
-                    "Content-Type": "application/json",
+                    'x-rapidapi-key': 'b1742526d8msh7a63fb689691a60p13741ajsn6619629c6355',
+                    'x-rapidapi-host': 'deep-translate1.p.rapidapi.com',
+                    'Content-Type': 'application/json'
                 },
-                data: [{Text: title}],
+                data: {
+                    q: recognizedPersonal || recognizedStranger,
+                    source: from,
+                    target: to
+                }
             };
             const response = await axios.request(options);
-            console.log(response.data[0].language);
+
+            alert(response.data.data.translations.translatedText);
         } catch (error) {
             console.error("Language detection failed:", error);
             Alert.alert("Error", "Failed to detect language.");
@@ -166,7 +186,7 @@ export default function Index() {
 
             <View>
                 {isLoading ? <ActivityIndicator size="large" color="#0000ff"/> :
-                    <Text style={styles.title}>{recognizedPersonal}</Text>}
+                    <Text style={styles.title}>{recognizedPersonal || recognizedStranger}</Text>}
             </View>
 
             <View style={styles.smallContainer}>
