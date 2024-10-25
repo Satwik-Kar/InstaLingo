@@ -18,10 +18,10 @@ export default function Index() {
     const [recognizedStranger, setRecognizedStranger] = useState();
     const [isPersonalListening, setIsPersonalListening] = useState(false);
 
-    const [strangerLanguageName, setStrangerLanguageName] = useState();
-    const [strangerLanguageId, setStrangerLanguageId] = useState();
-    const [languageId, setLanguageId] = useState();
-    const [languageName, setLanguageName] = useState();
+    const [strangerVoiceName, setStrangerVoiceName] = useState();
+    const [strangerVoiceId, setStrangerVoiceId] = useState();
+    const [personalVoiceId, setPersonalVoiceId] = useState();
+    const [personalVoiceName, setPersonalVoiceName] = useState();
     const [isLoading, setIsLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isStrangerLanguageSelected, setIsStrangerLanguageSelected] = useState(false);
@@ -36,10 +36,21 @@ export default function Index() {
     }, []);
     const onSpeechResults = (event) => {
         const speech = event.value ? event.value[0] : '';
-        setRecognizedPersonal(null) && setRecognizedStranger(null);
         isPersonalListening ? setRecognizedPersonal(speech) : setRecognizedStranger(speech);
-        throttledTranslateLanguage("or", "en")
+        const deepmindCodeStranger = LanguageUtils.getDeepMindCode(strangerVoiceId)
+        const deepmindCodePersonal = LanguageUtils.getDeepMindCode(personalVoiceId)
+        console.log("DeepMindCodeStranger", deepmindCodeStranger);
+        console.log("DeepMindCodePersonal", deepmindCodePersonal);
+        console.log("VoiceCodeStranger", strangerVoiceId);
+        console.log("VoiceCodePersonal", personalVoiceId);
 
+        if (isPersonalListening) {
+            console.log("isPersonalListening", isPersonalListening);
+            throttledTranslateLanguage(deepmindCodePersonal, deepmindCodeStranger)
+        } else {
+            console.log("isPersonalListening", isPersonalListening);
+            throttledTranslateLanguage(deepmindCodeStranger, deepmindCodePersonal)
+        }
 
     };
 
@@ -50,6 +61,9 @@ export default function Index() {
     }, []);
     const onSpeechError = (event) => {
         console.error('Speech recognition error: ', event.error);
+        if(event.error.code === '7') {
+            //no match
+        Alert.alert("Error", "Analysis of speech failed, please try again.");        }
         setIsLoading(false);
     };
 
@@ -57,9 +71,11 @@ export default function Index() {
         setIsModalVisible(prevState => !prevState);
     }, []);
 
-    const throttledTranslateLanguage = useCallback(throttle(async (from, to) => {
+    const throttledTranslateLanguage = useCallback(throttle(async (from: string, to: string) => {
         try {
             setIsLoading(true);
+            console.log("from:",from)
+            console.log("to:",to)
 
             const options = {
                 method: 'POST',
@@ -70,7 +86,7 @@ export default function Index() {
                     'Content-Type': 'application/json'
                 },
                 data: {
-                    q: recognizedPersonal || recognizedStranger,
+                    q: isPersonalListening?recognizedPersonal:recognizedStranger,
                     source: from,
                     target: to
                 }
@@ -88,11 +104,11 @@ export default function Index() {
 
     useEffect(() => {
         const loadLanguageSettings = async () => {
-            const valueId = await AsyncStorage.getItem("languageId");
-            const valueName = await AsyncStorage.getItem("languageName");
-            if (valueId && valueName) {
-                setLanguageId(valueId);
-                setLanguageName(valueName);
+            const voiceCode = await AsyncStorage.getItem("voiceCode");
+            const voiceName = await AsyncStorage.getItem("voiceName");
+            if (voiceCode && voiceName) {
+                setPersonalVoiceId(voiceCode);
+                setPersonalVoiceName(voiceName);
             } else {
                 toggleModal();
             }
@@ -101,15 +117,15 @@ export default function Index() {
         loadLanguageSettings();
     }, [toggleModal]);
 
-    const handleSelectLanguage = async (languageId, languageName) => {
+    const handleSelectLanguage = async (voiceCode, voiceName) => {
         if (isStrangerLanguageSelected) {
-            setStrangerLanguageId(languageId);
-            setStrangerLanguageName(languageName);
+            setStrangerVoiceId(voiceCode);
+            setStrangerVoiceName(voiceName);
         } else {
-            setLanguageId(languageId);
-            setLanguageName(languageName);
-            await AsyncStorage.setItem("languageId", languageId);
-            await AsyncStorage.setItem("languageName", languageName);
+            setPersonalVoiceId(voiceCode);
+            setPersonalVoiceName(voiceName);
+            await AsyncStorage.setItem("voiceCode", voiceCode);
+            await AsyncStorage.setItem("voiceName", voiceName);
         }
         setIsModalVisible(false);
     };
@@ -127,22 +143,22 @@ export default function Index() {
         setIsLoading(true);
         setIsPersonalListening(true);
         try {
-            await Voice.start(languageId);
+            await Voice.start(personalVoiceId);
+            console.log("Voice started:", personalVoiceId);
         } catch (error) {
             console.error('Error starting voice recognition: ', error);
         }
 
 
-    }, [isStrangerLanguageSelected]);
+    }, []);
 
     const handlePressStrangerOut = useCallback(() => {
 
-    }, [isStrangerLanguageSelected]);
+    }, []);
 
     const handlePressPersonalOut = useCallback(async () => {
 
         setIsLoading(false);
-        setIsPersonalListening(false);
         try {
             await Voice.stop();
         } catch (error) {
@@ -150,14 +166,15 @@ export default function Index() {
         }
 
 
-    }, [isStrangerLanguageSelected]);
+    }, []);
 
     const handlePressStrangerIn = useCallback(() => {
         if (!isStrangerLanguageSelected) {
             Alert.alert("Information", "Select a language for the stranger first!");
             return;
         }
-    }, [isStrangerLanguageSelected]);
+        setIsPersonalListening(false);
+    }, []);
     const ListItem = React.memo(({item, onSelect}) => (
         <Pressable onPress={() => onSelect(item.voiceCode, item.name)} style={styles.modalItem}>
             <Text style={styles.modalItemText}>{item.name}, {item.region}</Text>
@@ -173,7 +190,7 @@ export default function Index() {
             <View style={styles.smallContainer}>
 
                 <Pressable style={styles.pressableSelectLanguage} onPress={selectLanguageForStranger}>
-                    <Text>{strangerLanguageName || "Select Stranger Language"}</Text>
+                    <Text>{strangerVoiceName || "Select Stranger Language"}</Text>
                 </Pressable>
                 <Pressable style={styles.pressable} onPressIn={handlePressStrangerIn}
                            onPressOut={handlePressStrangerOut}>
@@ -191,7 +208,7 @@ export default function Index() {
                            onPressOut={handlePressPersonalOut}>
                     <Text>Hold to speak (PERSONAL)</Text>
                 </Pressable>
-                <Text style={styles.title}>{languageName}</Text>
+                <Text style={styles.title}>{personalVoiceName}</Text>
             </View>
 
             <Modal isVisible={isModalVisible} onBackdropPress={toggleModal} style={styles.modal}>
