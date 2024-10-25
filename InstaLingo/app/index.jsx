@@ -25,6 +25,7 @@ export default function Index() {
     const [isLoading, setIsLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isStrangerLanguageSelected, setIsStrangerLanguageSelected] = useState(false);
+    const [supportedLanguages, setSupportedLanguages] = useState([]);
     React.useEffect(() => {
         Voice.onSpeechResults = onSpeechResults;
         Voice.onSpeechError = onSpeechError;
@@ -41,24 +42,11 @@ export default function Index() {
 
 
     };
-    useEffect(() => {
-        // Function to get the speech recognition services available on the device
-        const fetchSpeechRecognitionServices = async () => {
-            try {
-                const availableServices = await Voice.getSpeechRecognitionServices();
-                console.log('Available Speech Recognition Services: ', availableServices);
-            } catch (error) {
-                console.error('Error fetching speech recognition services: ', error);
-            }
-        };
 
-        fetchSpeechRecognitionServices();
-    }, []);
     useEffect(() => {
         LanguageUtils.initialize(deepmind_languages, voice_languages);
-
-        const languages = LanguageUtils.getSupportedLanguages();
-        console.log(languages);
+        const supportedLanguages = LanguageUtils.getSupportedLanguages()
+        setSupportedLanguages(supportedLanguages)
     }, []);
     const onSpeechError = (event) => {
         console.error('Speech recognition error: ', event.error);
@@ -171,8 +159,8 @@ export default function Index() {
         }
     }, [isStrangerLanguageSelected]);
     const ListItem = React.memo(({item, onSelect}) => (
-        <Pressable onPress={() => onSelect(item.id, item.name)} style={styles.modalItem}>
-            <Text style={styles.modalItemText}>{item.name}</Text>
+        <Pressable onPress={() => onSelect(item.voiceCode, item.name)} style={styles.modalItem}>
+            <Text style={styles.modalItemText}>{item.name}, {item.region}</Text>
         </Pressable>
     ));
 
@@ -209,8 +197,8 @@ export default function Index() {
             <Modal isVisible={isModalVisible} onBackdropPress={toggleModal} style={styles.modal}>
                 <View style={styles.modalContent}>
                     <FlatList
-                        data={languages}
-                        keyExtractor={(item) => item.id}
+                        data={supportedLanguages}
+                        keyExtractor={(item) => item.voiceCode}
                         renderItem={renderItem}
                         initialNumToRender={10}
                         maxToRenderPerBatch={10}
