@@ -3,14 +3,17 @@ import React, {useCallback, useEffect, useState} from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Modal from "react-native-modal";
-import {languagesCodes} from "./languages";
 import {throttle} from 'lodash';
 import Voice from '@wdragon/react-native-voice';
+import {LanguageUtils} from './LanguageUtil';
+import {deepmind_languages} from './deepmind-langs.json';
+import {voice_languages} from './voice-languages.json';
+import {languagesCodes} from "./languages";
 
 const languages = languagesCodes;
 
 export default function Index() {
-    const [title, setTitle] = useState("नमस्ते");
+    const [title, setTitle] = useState();
     const [recognizedPersonal, setRecognizedPersonal] = useState();
     const [recognizedStranger, setRecognizedStranger] = useState();
     const [isPersonalListening, setIsPersonalListening] = useState(false);
@@ -34,7 +37,7 @@ export default function Index() {
         const speech = event.value ? event.value[0] : '';
         setRecognizedPersonal(null) && setRecognizedStranger(null);
         isPersonalListening ? setRecognizedPersonal(speech) : setRecognizedStranger(speech);
-        throttledTranslateLanguage("or","en")
+        throttledTranslateLanguage("or", "en")
 
 
     };
@@ -51,6 +54,12 @@ export default function Index() {
 
         fetchSpeechRecognitionServices();
     }, []);
+    useEffect(() => {
+        LanguageUtils.initialize(deepmind_languages, voice_languages);
+
+        const languages = LanguageUtils.getSupportedLanguages();
+        console.log(languages);
+    }, []);
     const onSpeechError = (event) => {
         console.error('Speech recognition error: ', event.error);
         setIsLoading(false);
@@ -60,7 +69,7 @@ export default function Index() {
         setIsModalVisible(prevState => !prevState);
     }, []);
 
-    const throttledTranslateLanguage = useCallback(throttle(async (from,to) => {
+    const throttledTranslateLanguage = useCallback(throttle(async (from, to) => {
         try {
             setIsLoading(true);
 
